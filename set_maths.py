@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import isprime
+import pickle
 
 mers = np.array([3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279, 2203, 2281, 3217, 4253, 4423, 9689, 9941, 11213, 19937, 21701, 23209, 44497, 86243, 110503, 132049, 216091, 756839, 859433, 1257787, 1398269, 2976221, 3021377, 6972593, 13466917, 20996011, 24036583, 25964951, 30402457, 32582657, 37156667, 42643801, 43112609, 57885161, 74207281, 77232917, 82589933])
 
@@ -72,51 +73,47 @@ def set_maths():
     min_len = min(len(set_x), len(set_y))
     x = set_x[:min_len]
     y = set_y[:min_len]
-	
-    outfile = open(f'{i}{j}.txt', 'w')
+    
     m = np.multiply(x, y)
     m_filtered = np.array([n for n in m if isprime(n)])
-    outfile.write(f'(m): {m}\n')
-    outfile.write(f'(m_filtered): {m_filtered}\n')
-    # d = np.divide(x, y)
-	d = np.divide(x, y).astype(int)
+    d = np.divide(x, y)
+    d1 = np.divide(x, y).astype(int)
     # d1 = np.divide(y, x)
-    # d_filtered = np.array([n for n in d if isprime(n)])
-    # d_filtered = np.round(d).astype(np.int64)
-    # outfile.write(f'(d_filtered): {d_filtered}\n')
-    # d1_filtered = np.array([n for n in d1 if isprime(n)])
-    # d1_filtered = np.round(d1).astype(np.int64)
-    # outfile.write(f'(d1_filtered): {d1_filtered}\n')
-    outfile.write(f'(x/y): {d}\n')
     # outfile.write(f'(y/x): {d1}\n')
     a = np.add(x, y)
     a_filtered = np.array([n for n in a if isprime(n)])
-    outfile.write(f'(x+y): {a}\n')
     s = np.subtract(x, y)
     s1 = np.subtract(y, x)
     s_filtered = np.array([n for n in s if isprime(n)])
-    outfile.write(f'(s_filtered): {s_filtered}\n')
     s1_filtered = np.array([n for n in s1 if isprime(n)])
-    outfile.write(f'(s1_filtered): {s1_filtered}\n')
-    outfile.write(f'(x-y): {s}\n')
-    outfile.write(f'(y-x): {s1}\n')
     f = np.floor_divide(x, y)
     f1 = np.floor_divide(y, x)
     f_filtered = np.array([n for n in f if isprime(n)])
-    outfile.write(f'(f_filtered): {f_filtered}\n')
     f1_filtered = np.array([n for n in f1 if isprime(n)])
-    outfile.write(f'(f1_filtered): {f1_filtered}\n')
-    outfile.write(f'(x//y): {f}\n')
-    outfile.write(f'(y//x): {f1}\n')
     mod = np.remainder(x, y)
     mod1 = np.remainder(y, x)
     mod_filtered = np.array([n for n in mod if isprime(n)])
-    outfile.write(f'(mod_filtered): {mod_filtered}\n')
     mod1_filtered = np.array([n for n in mod1 if isprime(n)])
-    outfile.write(f'(mod1_filtered): {mod1_filtered}\n')
-    outfile.write(f'(x%y): {mod}\n')
-    outfile.write(f'(y%x): {mod1}\n')
-    outfile.close()
+	
+    set_dictionary = {
+    'm': m,
+    'd': d,
+    'd1' : d1,
+    'a' : a,
+    'a_filtered' :a_filtered,
+    's' : s,
+    's1' : s1,
+    's_filtered' : s_filtered,
+    's1_filtered' : s1_filtered,
+    'f' : f,
+    'f1' : f1,
+    'f_filtered' : f_filtered,  
+    'f1_filtered' : f1_filtered,
+    'mod' : mod,
+    'mod1' : mod1,
+    'mod_filtered' : mod_filtered,
+    'mod1_filtered' : mod1_filtered
+    }
 
     plt.figure(figsize=(10, 6))
     plt.scatter(a, s, label=f'{i} +,- {j}', color='blue', s=10)
@@ -137,5 +134,8 @@ def set_maths():
     filename = f'{i}{j}.png'
     plt.savefig(filename, format='png')
     plt.show()
+	
+    with open(f'{i}{j}.pkl', 'wb') as f:
+        pickle.dump(set_dictionary, f)
 
 set_maths()
