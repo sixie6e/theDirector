@@ -126,6 +126,8 @@ def set_maths():
             next_set += 1
 
         if input("\nRun it again? (y/n): ").lower() != 'y':
+			with open(f'{i}{j}.pkl', 'wb') as f:
+				pickle.dump(results, f)
             break
 
 if __name__ == "__main__":
