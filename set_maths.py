@@ -51,7 +51,6 @@ next_set = 23
 
 def set_maths():
     global next_set
-    global pfile
     
     while True:
         i = input(f'First set number: ').strip()
@@ -127,10 +126,9 @@ def set_maths():
             next_set += 1
 
         if input("\nRun it again? (y/n): ").lower() != 'y':
-            with open(f'{i}{j}.pkl', 'ab+') as pfile:
-                pickle.dump(results, pfile)
-                pickle.dump(next_set, pfile)
-                pfile.close() 
+            with open(f'{i}{j}.pkl', 'wb+') as v:
+                pickle.dump(results, v)
+                v.close() 
             break
 
 if __name__ == "__main__":
