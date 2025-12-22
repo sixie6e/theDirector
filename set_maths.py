@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sympy import isprime
 import pickle
+import resource
 
 sets = {
     'set0': np.array([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541]),
@@ -48,88 +49,95 @@ sets = {
 }
 
 next_set = 23
+limit = 4 * 1024 * 1024 * 1024 
+resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
 
-def set_maths():
-    global next_set
-    
-    while True:
-        i = input(f'First set number: ').strip()
-        j = input('Second set number: ').strip()
-        
-        if i not in sets or j not in sets:
-            print("Invalid.")
-            continue
-
-        max_len_input = input(f'Array length(max {min(len(sets[i]), len(sets[j]))}): ').strip()
-        limit = int(max_len_input) if max_len_input.isdigit() else min(len(sets[i]), len(sets[j]))
-        set_x = sets[i][:limit]
-        set_y = sets[j][:limit]
-        
-        m = np.multiply(set_x, set_y)
-        a = np.add(set_x, set_y)
-        s = np.subtract(set_x, set_y)
-        f = np.floor_divide(set_x, set_y)
-        mod = np.remainder(set_x, set_y)
-        m_filtered = np.array([n for n in m if isprime(int(n))])
-        a_filtered = np.array([n for n in a if isprime(int(n))])
-        s_filtered = np.array([n for n in s if n > 0 and isprime(int(n))])
-        f_filtered = np.array([n for n in f if isprime(int(n))])
-        mod_filtered = np.array([n for n in mod if isprime(int(n))])
-
-        results = {
-            'm': m, 
-            'a': a, 
-            's': s, 
-            'f': f, 
-            'mod': mod, 
-            'm_filtered': m_filtered, 
-            'a_filtered': a_filtered, 
-            's_filtered': s_filtered, 
-            'f_filtered': f_filtered,
-            'mod_filtered': mod_filtered
-        }
-        
-        print("Options: 1: (a,s), 2: (m,a), 3: (a,f), 4: (a,mod), 5: (m,s), 6: (f,m), 7: (m,mod), 8: (mod,s), 9: (mod,f), 10: (s,f)")
-        order = input("Enter for default: ").strip()
-        
-        plot_map = {
-            '1': (a, s, f'{i} +,- {j}', 'blue'),
-            '2': (m, a, f'{i} +,* {j}', 'green'),
-            '3': (a, f, f'{i} +,// {j}', 'red'),
-            '4': (a, mod, f'{i} +,% {j}', 'purple'),
-            '5': (m, s, f'{i} *,- {j}', 'orange'),
-            '6': (f, m, f'{i} //,* {j}', 'yellow'),
-            '7': (m, mod, f'{i} *,% {j}', 'black'),
-            '8': (mod, s, f'{i} %,- {j}', 'gray'),
-            '9': (mod, f, f'{i} %,// {j}', 'magenta'),
-            '10': (s, f, f'{i} *,// {j}', 'skyblue')
-        }
-        plot_selection = order.split(',') if order else ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-
-        plt.figure(figsize=(10, 6))
-        for choice in plot_selection:
-            if choice in plot_map:
-                x_val, y_val, lbl, clr = plot_map[choice]
-                # adjust plotting len(filtered_sets)
-                p_len = min(len(x_val), len(y_val))
-                plt.scatter(x_val[:p_len], y_val[:p_len], label=lbl, color=clr, s=10)
-        plt.title(f'Set Maths: {i} & {j}')
-        plt.legend()
-        filename = f'{i}{j}.png'
-        plt.savefig(filename, format='png')
-        plt.show()
-        
-        for z in results:
-            new_key = f'set{next_set}'
-            sets[new_key] = results[z]
-            print(f"Stored {z} as {new_key} (Length: {len(sets[new_key])})")
-            next_set += 1
-
-        if input("\nRun it again? (y/n): ").lower() != 'y':
-            with open(f'{i}{j}.pkl', 'wb+') as v:
-                pickle.dump(results, v)
-                v.close() 
-            break
-
+try:
+	def set_maths():
+	    global next_set
+	    
+	    while True:
+	        i = input(f'First set number: ').strip()
+	        j = input('Second set number: ').strip()
+	        
+	        if i not in sets or j not in sets:
+	            print("Invalid.")
+	            continue
+	
+	        max_len_input = input(f'Array length(max {min(len(sets[i]), len(sets[j]))}): ').strip()
+	        limit = int(max_len_input) if max_len_input.isdigit() else min(len(sets[i]), len(sets[j]))
+	        set_x = sets[i][:limit]
+	        set_y = sets[j][:limit]
+	        
+	        m = np.multiply(set_x, set_y)
+	        a = np.add(set_x, set_y)
+	        s = np.subtract(set_x, set_y)
+	        f = np.floor_divide(set_x, set_y)
+	        mod = np.remainder(set_x, set_y)
+	        m_filtered = np.array([n for n in m if isprime(int(n))])
+	        a_filtered = np.array([n for n in a if isprime(int(n))])
+	        s_filtered = np.array([n for n in s if n > 0 and isprime(int(n))])
+	        f_filtered = np.array([n for n in f if isprime(int(n))])
+	        mod_filtered = np.array([n for n in mod if isprime(int(n))])
+	
+	        results = {
+	            'm': m, 
+	            'a': a, 
+	            's': s, 
+	            'f': f, 
+	            'mod': mod, 
+	            'm_filtered': m_filtered, 
+	            'a_filtered': a_filtered, 
+	            's_filtered': s_filtered, 
+	            'f_filtered': f_filtered,
+	            'mod_filtered': mod_filtered
+	        }
+	        
+	        print("Options: 1: (a,s), 2: (m,a), 3: (a,f), 4: (a,mod), 5: (m,s), 6: (f,m), 7: (m,mod), 8: (mod,s), 9: (mod,f), 10: (s,f)")
+	        order = input("Enter for default: ").strip()
+	        
+	        plot_map = {
+	            '1': (a, s, f'{i} +,- {j}', 'blue'),
+	            '2': (m, a, f'{i} +,* {j}', 'green'),
+	            '3': (a, f, f'{i} +,// {j}', 'red'),
+	            '4': (a, mod, f'{i} +,% {j}', 'purple'),
+	            '5': (m, s, f'{i} *,- {j}', 'orange'),
+	            '6': (f, m, f'{i} //,* {j}', 'yellow'),
+	            '7': (m, mod, f'{i} *,% {j}', 'black'),
+	            '8': (mod, s, f'{i} %,- {j}', 'gray'),
+	            '9': (mod, f, f'{i} %,// {j}', 'magenta'),
+	            '10': (s, f, f'{i} *,// {j}', 'skyblue')
+	        }
+	        plot_selection = order.split(',') if order else ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+	
+	        plt.figure(figsize=(10, 6))
+	        for choice in plot_selection:
+	            if choice in plot_map:
+	                x_val, y_val, lbl, clr = plot_map[choice]
+	                # adjust plotting len(filtered_sets)
+	                p_len = min(len(x_val), len(y_val))
+	                plt.scatter(x_val[:p_len], y_val[:p_len], label=lbl, color=clr, s=10)
+	        plt.title(f'Set Maths: {i} & {j}')
+	        plt.legend()
+	        filename = f'{i}{j}.png'
+	        plt.savefig(filename, format='png')
+	        plt.show()
+	        
+	        for z in results:
+	            new_key = f'set{next_set}'
+	            sets[new_key] = results[z]
+	            print(f"Stored {z} as {new_key} (Length: {len(sets[new_key])})")
+	            next_set += 1
+	
+	        if input("\nRun it again? (y/n): ").lower() != 'y':
+	            with open(f'{i}{j}.pkl', 'wb+') as v:
+	                pickle.dump(results, v)
+	                v.close() 
+	            break
+except MemoryError:
+    with open(f'{i}{j}.pkl', 'wb+') as v:
+        pickle.dump(results, v)
+        v.close()
+            
 if __name__ == "__main__":
     set_maths()
