@@ -139,7 +139,7 @@ except MemoryError:
     try:
         with open(f'memerror{i}{j}.pkl', "wb") as memfile:
             pickle.dump(results, memfile)
-        print(f'Data successfully dumped to emergency_dump{i}{j}.pkl')
+        print(f'Data successfully dumped to memerror{i}{j}.pkl')
     except Exception as save_error:
         print(f"Failed to save data: {save_error}")
     finally:
