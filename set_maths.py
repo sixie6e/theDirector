@@ -132,12 +132,18 @@ try:
 	        if input("\nRun it again? (y/n): ").lower() != 'y':
 	            with open(f'{i}{j}.pkl', 'wb+') as v:
 	                pickle.dump(results, v)
-	                v.close() 
+	                v.close()
 	            break
+				
 except MemoryError:
-    with open(f'{i}{j}.pkl', 'wb+') as v:
-        pickle.dump(results, v)
-        v.close()
+    try:
+        with open(f'memerror{i}{j}.pkl', "wb") as memfile:
+            pickle.dump(results, memfile)
+        print(f'Data successfully dumped to emergency_dump{i}{j}.pkl')
+    except Exception as save_error:
+        print(f"Failed to save data: {save_error}")
+    finally:
+        sys.exit(1)
             
 if __name__ == "__main__":
     set_maths()
