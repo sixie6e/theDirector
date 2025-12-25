@@ -153,6 +153,7 @@ def set_maths():
             for z in results:
                 new_key = f'set{next_set}'
                 sets[new_key] = results[z]
+				print(f"Stored {z} as {new_key} (Length: {len(sets[new_key])})")
                 next_set += 1
 
             if mode == '1':
