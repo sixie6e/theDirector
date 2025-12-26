@@ -72,8 +72,19 @@ def set_maths():
      
             if not same_len_keys or target_len == 0:
                 print(f"{next_set} has length 0.")
-            j = random.choice(same_len_keys)
-            
+				
+            try:
+                j = random.choice(same_len_keys)
+            except IndexError:
+                try:
+                    with open(f'indexerror{i}{j}.pkl', "wb") as ie:
+                        pickle.dump(results, ie)
+                    print(f'Data successfully dumped to indexerror{i}{j}.pkl')
+                except Exception as save_error:
+                    print(f'Failed to save IndexError data: {save_error}')
+                finally:
+                    sys.exit(1)
+					
             with open('selections_history.txt', 'a+') as log:
                 log.write(f"Selected: {i} and {j} (Length: {target_len})\n")
             print(f"Randomly selected {i} and {j} (Length: {target_len})")
@@ -103,11 +114,11 @@ def set_maths():
             mod_filtered = np.array([n for n in mod if isprime(int(n))])
 
             results = {
-                'm': m,
-                'a': a,
-                's': s,
-                'f': f,
-                'mod': mod, 
+                # 'm': m,
+                # 'a': a,
+                # 's': s,
+                # 'f': f,
+                # 'mod': mod, 
                 'm_filtered': m_filtered,
                 'a_filtered': a_filtered, 
                 's_filtered': s_filtered,
@@ -116,16 +127,16 @@ def set_maths():
             }
             
             plot_map = {
-                '1': (a, s, f'{i} +,- {j}', 'blue'),
-                '2': (m, a, f'{i} +,* {j}', 'green'),
-                '3': (a, f, f'{i} +,// {j}', 'red'),
-                '4': (a, mod, f'{i} +,% {j}', 'purple'),
-                '5': (m, s, f'{i} *,- {j}', 'orange'),
-                '6': (f, m, f'{i} //,* {j}', 'yellow'),
-                '7': (m, mod, f'{i} *,% {j}', 'black'),
-                '8': (mod, s, f'{i} %,- {j}', 'gray'),
-                '9': (mod, f, f'{i} %,// {j}', 'magenta'),
-                '10': (s, f, f'{i} *,// {j}', 'skyblue')
+                '1': (m_filtered, m_filtered, f'{i} * {j}', 'blue'),
+                '2': (a_filtered, s_filtered, f'{i} + {j}', 'green'),
+                '3': (s_filtered, s_filtered, f'{i} - {j}', 'red'),
+                '4': (f_filtered, f_filtered, f'{i} // {j}', 'purple'),
+                '5': (mod_filtered, mod_filtered, f'{i} % {j}', 'gray'),
+                # '6': (f, m, f'{i} //,* {j}', 'yellow'),
+                # '7': (m, mod, f'{i} *,% {j}', 'black'),
+                # '8': (mod, s, f'{i} %,- {j}', 'orange'),
+                # '9': (mod, f, f'{i} %,// {j}', 'magenta'),
+                # '10': (s, f, f'{i} *,// {j}', 'skyblue')
             }
             
             for z in results:
@@ -164,7 +175,7 @@ def set_maths():
                     pickle.dump(results, memfile)
                 print(f'Data successfully dumped to memerror{i}{j}.pkl')
             except Exception as save_error:
-                print(f'Failed to save data: {save_error}')
+                print(f'Failed to save MemoryError data: {save_error}')
             finally:
                 sys.exit(1)
 
