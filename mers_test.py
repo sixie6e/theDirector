@@ -5,7 +5,7 @@ import os
 import sys
 
 x = 19760537
-# x = 19813593 # not emirp
+# x = 198131369 # not emirp
 # y = 21343377 +- 2
 # print(isprime(x))
 # print(isprime(y))
@@ -37,9 +37,8 @@ def llcheck(p):
             
             if i % interval == 0:
                 save_progress(p, i, s)
-                print(f"progress: {i}/{p-2} ({(i/(p-2))*100:.2f}%)', end='\r")
-
-        
+                print(f"progress: {i}/{p-2} ({(i/(p-2))*100:.2f}%)", end='\r')
+                
         is_prime = (s == 0)
         print(f"\nConclusion: {'Prime' if is_prime else 'Compost'}")
         if os.path.exists(checkpoint):
