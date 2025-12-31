@@ -29,7 +29,7 @@ def llcheck(p):
                 s = mpz(data['s'], 16)
                 start_iteration = data['iteration'] + 1
             else:
-                print(f"Different {p} located. New session.")
+                print(f"Iteration for different number located: {data['p']}. New session started for {p}.")
 
     try:
         for i in range(start_iteration, p - 1):
