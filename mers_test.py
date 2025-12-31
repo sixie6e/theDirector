@@ -49,6 +49,11 @@ def llcheck(p):
         save_progress(p, i, s)
         sys.exit()
 
+    except MemoryError:
+        print("\nMemory Error.")
+        save_progress(p, i, s)
+        sys.exit()
+
 def save_progress(p, iteration, s):
     with open(checkpoint, 'w') as f:
         json.dump({
