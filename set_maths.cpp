@@ -24,7 +24,7 @@
 #include <fstream>
 #include <gmpxx.h> 
 #include <omp.h>
-#include <sys/resource.h> 
+#include <sys/resource.h>
 
 using namespace std;
 
@@ -37,15 +37,54 @@ int next_set = 23;
 
 bool is_prime(const BigInt& n) {
     if (n <= 1) return false;
-    // 0 == composite
+    // 0 == composite, >0 == probably prime
     return mpz_probab_prime_p(n.get_mpz_t(), 25) > 0;
+}
+
+
+// column == set, row == value
+
+void save_to_csv(const string& filename) {
+    ofstream file(filename);
+
+    if (file.is_open()) {
+        bool first = true;
+        for (auto const& [name, values] : sets) {
+            if (!first) file << ",";
+            file << name;
+            first = false;
+        }
+        file << "\n";
+        
+        size_t max_rows = 0;
+        for (auto const& [name, values] : sets) {
+            max_rows = max(max_rows, values.size());
+        }
+
+        for (size_t r = 0; r < max_rows; ++r) {
+            first = true;
+            for (auto const& [name, values] : sets) {
+                if (!first) file << ",";
+                
+                if (r < values.size()) {
+                    file << values[r].get_str();
+                }
+                first = false;
+            }
+            file << "\n";
+        }
+        file.close();
+        cout << "Results saved to " << filename << endl;
+    } else {
+        cerr << "Error: Could not open file." << endl;
+    }
 }
 
 void process_sets(const string& id_i, const string& id_j, int limit_val) {
     const vector<BigInt>& set_x = sets[id_i];
     const vector<BigInt>& set_y = sets[id_j];
     vector<BigInt> m_res, a_res, s_res, f_res, mod_res;
-  
+
     #pragma omp parallel
     {
         vector<BigInt> local_m, local_a, local_s, local_f, local_mod;
@@ -57,8 +96,10 @@ void process_sets(const string& id_i, const string& id_j, int limit_val) {
           
             BigInt m = x * y;
             if (is_prime(m)) local_m.push_back(m);
+            
             BigInt a = x + y;
             if (is_prime(a)) local_a.push_back(a);
+            
             BigInt s = x - y;
             if (s > 0 && is_prime(s)) local_s.push_back(s);
           
@@ -69,6 +110,7 @@ void process_sets(const string& id_i, const string& id_j, int limit_val) {
                 if (is_prime(mod)) local_mod.push_back(mod);
             }
         }
+        
         #pragma omp critical
         {
             m_res.insert(m_res.end(), local_m.begin(), local_m.end());
@@ -81,6 +123,9 @@ void process_sets(const string& id_i, const string& id_j, int limit_val) {
   
     if (!m_res.empty()) sets["set" + to_string(next_set++)] = m_res;
     if (!a_res.empty()) sets["set" + to_string(next_set++)] = a_res;
+    if (!s_res.empty()) sets["set" + to_string(next_set++)] = s_res;
+    if (!f_res.empty()) sets["set" + to_string(next_set++)] = f_res;
+    if (!mod_res.empty()) sets["set" + to_string(next_set++)] = mod_res;
     cout << "Processed. Next set index is: " << next_set << endl;
 }
 
@@ -102,6 +147,7 @@ int main() {
     if (sets.count(i) && sets.count(j)) {
         int limit_val = min(sets[i].size(), sets[j].size());
         process_sets(i, j, limit_val);
+        save_to_csv("results.csv");
     } else {
         cout << "Invalid sets." << endl;
     }
