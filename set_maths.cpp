@@ -1,5 +1,3 @@
-// g++ -O3 -fopenmp set_maths.cpp -lgmpxx -lgmp -o set_maths
-
 #include <iostream>
 #include <vector>
 #include <string>
