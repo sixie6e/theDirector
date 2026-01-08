@@ -153,7 +153,7 @@ void process_pair(string i, string j, int limit, bool interactive) {
         cout << ". Stored as " << new_set_name << endl;
         next_set++;
     } else {
-        cout << "\nNo primes found for " << i << " and " << j << ". Skipping set." << endl;
+        // cout << "\nNo primes found for " << i << " and " << j << ". Skipping set." << endl;
         next_set++;
     }
 }
