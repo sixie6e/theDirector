@@ -7,13 +7,21 @@
 #include <omp.h>
 #include <sys/resource.h>
 #include <algorithm>
+#include <csignal>
+#include <cstdlib>
+#include <atomic> 
 
 using namespace std;
-
 typedef mpz_class BigInt;
 
 map<string, vector<BigInt>> sets;
 int next_set = 23;
+std::atomic<bool> stop_requested(false);
+
+void signal_handler(int signum) {
+    stop_requested = true;
+    cout << "\n[KeyboardInterrupt.]" << endl;
+}
 
 bool is_prime(const BigInt& n) {
     if (n <= 1) return false;
@@ -130,12 +138,16 @@ void initialize_base_sets() {
     next_set = 23;
 }
 
-void process_pair(string i, string j, int limit, bool interactive) {
+void process_pair(string i, string j, int limit) {
+    if (stop_requested) return;
+
     vector<BigInt> results;
     size_t range_limit = min({sets[i].size(), sets[j].size(), (size_t)limit});
 
     #pragma omp parallel for
     for (size_t k = 0; k < range_limit; ++k) {
+        if (stop_requested) continue; 
+
         BigInt a = sets[i][k];
         BigInt b = sets[j][k];
         BigInt val = (a * b) + (a - b);
@@ -149,11 +161,10 @@ void process_pair(string i, string j, int limit, bool interactive) {
     if (!results.empty()) {
         string new_set_name = "set" + to_string(next_set);
         sets[new_set_name] = results;
-        cout << "\nFound " << results.size() << " primes for " << i << " and " << j;
+        cout << "Found " << results.size() << " primes for " << i << " and " << j;
         cout << ". Stored as " << new_set_name << endl;
         next_set++;
     } else {
-        // cout << "\nNo primes found for " << i << " and " << j << ". Skipping set." << endl;
         next_set++;
     }
 }
@@ -162,11 +173,15 @@ void save_to_csv(const string& filename) {
     ofstream file(filename);
     if (!file.is_open()) return;
 
-    bool first = true;
-    for (auto const& [name, values] : sets) {
-        if (!first) file << ",";
-        file << name;
-        first = false;
+    vector<string> keys;
+    for (auto const& [name, _] : sets) keys.push_back(name);
+    sort(keys.begin(), keys.end(), [](const string& a, const string& b) {
+        if (a.size() != b.size()) return a.size() < b.size();
+        return a < b;
+    });
+
+    for (size_t i = 0; i < keys.size(); ++i) {
+        file << keys[i] << (i == keys.size() - 1 ? "" : ",");
     }
     file << "\n";
 
@@ -174,11 +189,10 @@ void save_to_csv(const string& filename) {
     for (auto const& [name, values] : sets) max_rows = max(max_rows, values.size());
 
     for (size_t r = 0; r < max_rows; ++r) {
-        first = true;
-        for (auto const& [name, values] : sets) {
-            if (!first) file << ",";
+        for (size_t i = 0; i < keys.size(); ++i) {
+            const auto& values = sets[keys[i]];
             if (r < values.size()) file << values[r].get_str();
-            first = false;
+            file << (i == keys.size() - 1 ? "" : ",");
         }
         file << "\n";
     }
@@ -186,14 +200,15 @@ void save_to_csv(const string& filename) {
     cout << "Results saved to " << filename << endl;
 }
 
-
 int main() {
+    std::signal(SIGINT, signal_handler);
+
     struct rlimit rl;
     rl.rlim_cur = 8ULL * 1024 * 1024 * 1024;
     rl.rlim_max = 8ULL * 1024 * 1024 * 1024;
     setrlimit(RLIMIT_AS, &rl);
 
-    cout << "Resume from a saved state? ";
+    cout << "Resume from a saved state? (y/n): ";
     char resumeChoice;
     cin >> resumeChoice;
 
@@ -211,15 +226,16 @@ int main() {
     cin >> mode;
 
     if (mode == "1") {
-        while (true) {
+        while (!stop_requested) {
             string i, j;
             int limit;
             cout << "First set: "; cin >> i;
             cout << "Second set: "; cin >> j;
             cout << "Set length: "; cin >> limit;
 
-            process_pair(i, j, limit, true);
+            process_pair(i, j, limit);
 
+            if (stop_requested) break;
             cout << "Run another pair? (y/n): ";
             char choice; cin >> choice;
             if (choice != 'y' && choice != 'Y') break;
@@ -229,13 +245,14 @@ int main() {
         for (auto const& [name, _] : sets) keys.push_back(name);
         sort(keys.begin(), keys.end());
 
-        for (size_t i_idx = 0; i_idx < keys.size(); ++i_idx) {
-            for (size_t j_idx = i_idx + 1; j_idx < keys.size(); ++j_idx) {
-                process_pair(keys[i_idx], keys[j_idx], 1000000, false);
+        for (size_t i_idx = 0; i_idx < keys.size() && !stop_requested; ++i_idx) {
+            for (size_t j_idx = i_idx + 1; j_idx < keys.size() && !stop_requested; ++j_idx) {
+                process_pair(keys[i_idx], keys[j_idx], 1000000);
             }
         }
     }
-
+    
+    cout << "\nExiting." << endl;
     save_state();
     save_to_csv("cpp_export.csv");
     
