@@ -89,7 +89,7 @@ void load_state(int index) {
 void initialize_base_sets() {
     cout << "Initializing base sets:" << endl;
     
-    sets["set0"] = {1, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541};
+    sets["set0"] = {3, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541};
     
     sets["set1"] = {547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997, 1009, 1013, 1019, 1021, 1031, 1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087, 1091, 1093, 1097, 1103, 1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193, 1201, 1213, 1217, 1223};
     
@@ -131,49 +131,50 @@ void initialize_base_sets() {
     
     sets["set20"] = {17393, 17401, 17417, 17419, 17431, 17443, 17449, 17467, 17471, 17477, 17483, 17489, 17491, 17497, 17509, 17519, 17539, 17551, 17569, 17573, 17579, 17581, 17597, 17599, 17609, 17623, 17627, 17657, 17659, 17669, 17681, 17683, 17707, 17713, 17729, 17737, 17747, 17749, 17761, 17783, 17789, 17791, 17807, 17827, 17837, 17839, 17851, 17863, 17881, 17891, 17903, 17909, 17911, 17921, 17923, 17929, 17939, 17957, 17959, 17971, 17977, 17981, 17987, 17989, 18013, 18041, 18043, 18047, 18049, 18059, 18061, 18077, 18089, 18097, 18119, 18121, 18127, 18131, 18133, 18143, 18149, 18169, 18181, 18191, 18199, 18211, 18217, 18223, 18229, 18233, 18251, 18253, 18257, 18269, 18287, 18289, 18301, 18307, 18311, 18313};
     
-    sets["set21"] = {1, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279, 2203, 2281, 3217, 4253, 4423, 9689, 9941, 11213};
+    sets["set21"] = {3, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279, 2203, 2281, 3217, 4253, 4423, 9689, 9941, 11213};
     sets["set22"] = {BigInt("44497"), BigInt("86243"), BigInt("110503"), BigInt("132049"), BigInt("216091"), BigInt("756839"), BigInt("859433"), BigInt("1257787"), BigInt("1398269"), BigInt("2976221"),BigInt("3021377"), BigInt("6972593"), BigInt("13466917"), BigInt("20996011"), BigInt("24036583"), BigInt("25964951"), BigInt("30402457"), BigInt("32582657"), BigInt("37156667"), BigInt("42643801"), BigInt("43112609"), BigInt("57885161"), BigInt("74207281"), BigInt("77232917"), BigInt("82589933"), BigInt("136279841")};
     
     next_set = 23;
 }
 
 void process_pair(string i, string j, int limit) {
-    if (sets.find(i) == sets.end() || sets.find(j) == sets.end()) return;
+    vector<string> operations = {"+", "*", "-", "%"};
+    
+    for (const string& op : operations) {
+        vector<BigInt> results;
+        #pragma omp parallel for collapse(2)
+        
+        for (size_t idx_a = 0; idx_a < sets[i].size(); ++idx_a) {
+            for (size_t idx_b = 0; idx_b < sets[j].size(); ++idx_b) {
+                if (stop_requested) continue;
+                
+                BigInt a = sets[i][idx_a];
+                BigInt b = sets[j][idx_b];
+                BigInt val;
 
-    const auto& set_i = sets[i];
-    const auto& set_j = sets[j];
-    vector<BigInt> results;
+                if (op == "+") val = a + b;
+                else if (op == "*") val = a * b;
+                else if (op == "-") val = (a > b) ? (a - b) : (b - a);
+                else if (op == "%" && b != 0) val = a % b;
+                else continue;
 
-    size_t n = min({(size_t)limit, set_i.size(), set_j.size()});
-
-    #pragma omp parallel for
-    for (size_t k = 0; k < n; ++k) {
-        BigInt a = set_i[k];
-        BigInt b = set_j[k];
-
-        BigInt val1 = (a * b) + (a - b);
-        if (is_prime(val1)) {
-            #pragma omp critical
-            results.push_back(val1);
-        }
-
-        if (a != b) {
-            BigInt val2 = (a * b) + (b - a);
-            if (is_prime(val2)) {
-                #pragma omp critical
-                results.push_back(val2);
+                if (is_prime(val)) {
+                    #pragma omp critical
+                    {
+                        if (results.size() < 100) {
+                            results.push_back(val);
+                        }
+                    }
+                }
             }
         }
-    }
 
-    if (!results.empty()) {
-        string new_set_name = "set" + to_string(next_set++);
-        sets[new_set_name] = results;
-        cout << "Found " << results.size() << " primes for " << i << " and " << j;
-        cout << ". Stored as " << new_set_name << endl;
-        next_set++;
-    } else {
-        next_set++;
+        if (!results.empty()) {
+            string new_set_name = "set" + to_string(next_set++);
+            sets[new_set_name] = results;
+            cout << "Found " << results.size() << " primes for " << i << " " << op << " " << j;
+            cout << ". Stored as " << new_set_name << endl;
+        }
     }
 }
 
