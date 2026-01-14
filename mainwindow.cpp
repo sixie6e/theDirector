@@ -189,10 +189,39 @@ void MainWindow::on_actionSave_Session_triggered()
                 ofs.write(s.c_str(), s_len);
             }
         }
+    emit statusLog("Saved .bin file as last_set + 1.");
 }
 
 void MainWindow::on_actionExport_Session_triggered()
 {
-    
+    const std::string& fn = "export.csv";
+    std::ofstream file(fn);
+        if (!file.is_open()) return;
+
+        std::vector<std::string> keys;
+        for (auto const& [name, _] : sets) keys.push_back(name);
+        sort(keys.begin(), keys.end(), [](const std::string& a, const std::string& b) {
+            if (a.size() != b.size()) return a.size() < b.size();
+            return a < b;
+        });
+
+        for (size_t i = 0; i < keys.size(); ++i) {
+            file << keys[i] << (i == keys.size() - 1 ? "" : ",");
+        }
+        file << "\n";
+
+        size_t max_rows = 0;
+        for (auto const& [name, values] : sets) max_rows = std::max(max_rows, values.size());
+
+        for (size_t r = 0; r < max_rows; ++r) {
+            for (size_t i = 0; i < keys.size(); ++i) {
+                const auto& values = sets[keys[i]];
+                if (r < values.size()) file << values[r].get_str();
+                file << (i == keys.size() - 1 ? "" : ",");
+            }
+            file << "\n";
+        }
+        file.close();
+        emit statusLog("Saved .csv file.");
 }
 
