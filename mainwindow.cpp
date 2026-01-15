@@ -225,3 +225,38 @@ void MainWindow::on_actionExport_Session_triggered()
         emit statusLog("Saved .csv file.");
 }
 
+
+void MainWindow::on_actionLoad_Session_triggered()
+{
+    std::string file_to_load = "*.bin";
+    std::ifstream ifs(file_to_load, std::ios::binary);
+    if (!ifs) {
+        emit statusLog("Error: Could not find file.");
+        exit(1);
+    }
+
+    ifs.read((char*)&next_set, sizeof(next_set));
+    size_t num_sets;
+    ifs.read((char*)&num_sets, sizeof(num_sets));
+
+    for (size_t i = 0; i < num_sets; ++i) {
+        size_t name_len;
+        ifs.read((char*)&name_len, sizeof(name_len));
+        std::string name(name_len, ' ');
+        ifs.read(&name[0], name_len);
+
+        size_t vec_size;
+        ifs.read((char*)&vec_size, sizeof(vec_size));
+        std::vector<BigInt> values;
+        for (size_t j = 0; j < vec_size; ++j) {
+            size_t s_len;
+            ifs.read((char*)&s_len, sizeof(s_len));
+            std::string s(s_len, ' ');
+            ifs.read(&s[0], s_len);
+            values.push_back(BigInt(s));
+        }
+        sets[name] = values;
+    }
+    emit statusLog("Resumed from {file_to_load}");
+}
+
