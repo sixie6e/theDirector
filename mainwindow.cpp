@@ -97,11 +97,11 @@ void MainWindow::on_runButton_clicked() {
     ui->progressBar->setValue(0);
 
     if (ui->radioAuto->isChecked()) {
-        QtConcurrent::run([this]() { this->runAutoMode(); });
+        (void)QtConcurrent::run([this]() { this->runAutoMode(); });
     } else {
         std::string sA = ui->setAInput->text().toStdString();
         std::string sB = ui->setBInput->text().toStdString();
-        QtConcurrent::run([this, sA, sB]() {
+        (void)QtConcurrent::run([this, sA, sB]() {
             this->process_pair(sA, sB, 100);
             emit progressUpdated(100);
             emit calculationFinished();
@@ -258,5 +258,17 @@ void MainWindow::on_actionLoad_Session_triggered()
         sets[name] = values;
     }
     emit statusLog("Resumed from {file_to_load}");
+}
+
+
+void MainWindow::on_actionExit_triggered()
+{
+    exit(0);
+}
+
+
+void MainWindow::on_actionAbout_triggered()
+{
+    emit statusLog("[github.com/sixie6e]\n[brentelisens.substack.com]\n[distherapy.altervista.org]\n[instagram.com/sixie6e]");
 }
 
