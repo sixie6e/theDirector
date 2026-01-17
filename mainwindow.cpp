@@ -1,12 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QtConcurrent>
-#include <omp.h>
 #include <fstream>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <parquet/arrow/writer.h>
-
+#include <omp.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -26,7 +25,7 @@ void MainWindow::updateProgressBar(int value) { ui->progressBar->setValue(value)
 void MainWindow::handleLog(QString msg) { ui->textEdit_logs->appendPlainText(msg); }
 void MainWindow::onRunComplete() {
     ui->runButton->setEnabled(true);
-    emit statusLog("Execution finished or stopped.");
+    Q_EMIT statusLog("Execution finished or stopped.");
 }
 
 bool MainWindow::is_prime(const BigInt& n) {
@@ -43,7 +42,7 @@ void MainWindow::process_pair(std::string i, std::string j, int limit) {
         auto& setA = sets[i];
         auto& setB = sets[j];
 
-#pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
         for (size_t idx_a = 0; idx_a < setA.size(); ++idx_a) {
             for (size_t idx_b = 0; idx_b < setB.size(); ++idx_b) {
                 if (stop_requested) continue;
@@ -70,7 +69,7 @@ void MainWindow::process_pair(std::string i, std::string j, int limit) {
         if (!results.empty()) {
             std::string new_set_name = "set" + std::to_string(next_set++);
             sets[new_set_name] = results;
-            emit statusLog(QString("Found %1 primes for %2 %3 %4 -> %5")
+            Q_EMIT statusLog(QString("Found %1 primes for %2 %3 %4 -> %5")
                                .arg(results.size()).arg(QString::fromStdString(i))
                                .arg(QString::fromStdString(op)).arg(QString::fromStdString(j))
                                .arg(QString::fromStdString(new_set_name)));
@@ -89,10 +88,10 @@ void MainWindow::runAutoMode() {
         for (size_t j = i + 1; j < keys.size() && !stop_requested; ++j) {
             process_pair(keys[i], keys[j], 10);
             processed++;
-            emit progressUpdated((processed * 100) / total_pairs);
+            Q_EMIT progressUpdated((processed * 100) / total_pairs);
         }
     }
-    emit calculationFinished();
+    Q_EMIT calculationFinished();
 }
 
 void MainWindow::on_runButton_clicked() {
@@ -107,15 +106,15 @@ void MainWindow::on_runButton_clicked() {
         std::string sB = ui->setBInput->text().toStdString();
         (void)QtConcurrent::run([this, sA, sB]() {
             this->process_pair(sA, sB, 100);
-            emit progressUpdated(100);
-            emit calculationFinished();
+            Q_EMIT this->progressUpdated(100);
+            Q_EMIT this->calculationFinished();
         });
     }
 }
 
 void MainWindow::on_stopButton_clicked() {
     stop_requested = true;
-    emit statusLog("[Keyboard Interrupt.]");
+    Q_EMIT statusLog("[Keyboard Interrupt.]");
 }
 
 void MainWindow::initialize_base_sets() {
@@ -166,7 +165,7 @@ void MainWindow::initialize_base_sets() {
 
     next_set = 23;
 
-    emit statusLog("Base sets initialized.");
+    Q_EMIT statusLog("Base sets initialized.");
 }
 
 void MainWindow::on_actionSave_Session_triggered()
@@ -193,7 +192,7 @@ void MainWindow::on_actionSave_Session_triggered()
                 ofs.write(s.c_str(), s_len);
             }
         }
-    emit statusLog("Saved .bin file as last_set + 1.");
+    Q_EMIT statusLog("Saved .bin file as last_set + 1.");
 }
 
 void MainWindow::on_actionExport_Session_triggered()
@@ -244,10 +243,10 @@ void MainWindow::on_actionExport_Session_triggered()
         *table,
         arrow::default_memory_pool(),
         outfile,
-        65536 // row group size
+        65536
     );
 
-    if (status.ok()) emit statusLog(".parquet saved.");
+    if (status.ok()) Q_EMIT statusLog(".parquet saved.");
 }
 
 void MainWindow::on_actionLoad_Session_triggered()
@@ -255,7 +254,7 @@ void MainWindow::on_actionLoad_Session_triggered()
     std::string file_to_load = "*.bin";
     std::ifstream ifs(file_to_load, std::ios::binary);
     if (!ifs) {
-        emit statusLog("Error: Could not find file.");
+        Q_EMIT statusLog("Error: Could not find file.");
         exit(1);
     }
 
@@ -281,7 +280,7 @@ void MainWindow::on_actionLoad_Session_triggered()
         }
         sets[name] = values;
     }
-    emit statusLog("Resumed from {file_to_load}");
+    Q_EMIT statusLog("Resumed from {file_to_load}");
 }
 
 
@@ -293,6 +292,6 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_actionAbout_triggered()
 {
-    emit statusLog("[github.com/sixie6e]\n[brentelisens.substack.com]\n[distherapy.altervista.org]\n[instagram.com/sixie6e]");
+    Q_EMIT statusLog("[github.com/sixie6e]\n[brentelisens.substack.com]\n[distherapy.altervista.org]\n[instagram.com/sixie6e]");
 }
 
