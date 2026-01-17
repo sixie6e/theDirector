@@ -3,6 +3,10 @@
 #include <QtConcurrent>
 #include <omp.h>
 #include <fstream>
+#include <arrow/api.h>
+#include <arrow/io/api.h>
+#include <parquet/arrow/writer.h>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -194,37 +198,57 @@ void MainWindow::on_actionSave_Session_triggered()
 
 void MainWindow::on_actionExport_Session_triggered()
 {
-    const std::string& fn = "export.csv";
-    std::ofstream file(fn);
-        if (!file.is_open()) return;
+    std::vector<std::string> keys;
+    for (auto const& [name, _] : sets) keys.push_back(name);
+    std::sort(keys.begin(), keys.end(), [](const std::string& a, const std::string& b) {
+        if (a.size() != b.size()) return a.size() < b.size();
+        return a < b;
+    });
 
-        std::vector<std::string> keys;
-        for (auto const& [name, _] : sets) keys.push_back(name);
-        sort(keys.begin(), keys.end(), [](const std::string& a, const std::string& b) {
-            if (a.size() != b.size()) return a.size() < b.size();
-            return a < b;
-        });
+    size_t max_rows = 0;
+    for (auto const& [name, values] : sets) max_rows = std::max(max_rows, values.size());
 
-        for (size_t i = 0; i < keys.size(); ++i) {
-            file << keys[i] << (i == keys.size() - 1 ? "" : ",");
-        }
-        file << "\n";
+    arrow::FieldVector fields;
+    for (const auto& key : keys) {
+        fields.push_back(arrow::field(key, arrow::utf8()));
+    }
 
-        size_t max_rows = 0;
-        for (auto const& [name, values] : sets) max_rows = std::max(max_rows, values.size());
+    auto schema = arrow::schema(fields);
+
+    std::vector<std::shared_ptr<arrow::Array>> arrays;
+    for (const auto& key : keys) {
+        arrow::StringBuilder builder;
+        const auto& values = sets[key];
 
         for (size_t r = 0; r < max_rows; ++r) {
-            for (size_t i = 0; i < keys.size(); ++i) {
-                const auto& values = sets[keys[i]];
-                if (r < values.size()) file << values[r].get_str();
-                file << (i == keys.size() - 1 ? "" : ",");
+            if (r < values.size()) {
+                builder.Append(values[r].get_str());
+            } else {
+                builder.AppendNull();
             }
-            file << "\n";
         }
-        file.close();
-        emit statusLog("Saved .csv file.");
-}
 
+        std::shared_ptr<arrow::Array> array;
+        builder.Finish(&array);
+        arrays.push_back(array);
+    }
+
+    auto table = arrow::Table::Make(schema, arrays);
+
+    std::shared_ptr<arrow::io::FileOutputStream> outfile;
+    auto open_res = arrow::io::FileOutputStream::Open("export.parquet");
+    if (!open_res.ok()) return;
+    outfile = open_res.ValueOrDie();
+
+    auto status = parquet::arrow::WriteTable(
+        *table,
+        arrow::default_memory_pool(),
+        outfile,
+        65536 // row group size
+    );
+
+    if (status.ok()) emit statusLog(".parquet saved.");
+}
 
 void MainWindow::on_actionLoad_Session_triggered()
 {
