@@ -18,4 +18,4 @@ def cpp_plt(filename):
     plt.show()
 
 if __name__ == "__main__":
-    cpp_plt("cpp_export.parquet")
+    cpp_plt("export.parquet")
