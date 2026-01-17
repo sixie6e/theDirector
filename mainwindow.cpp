@@ -295,3 +295,12 @@ void MainWindow::on_actionAbout_triggered()
     Q_EMIT statusLog("[github.com/sixie6e]\n[brentelisens.substack.com]\n[distherapy.altervista.org]\n[instagram.com/sixie6e]");
 }
 
+void MainWindow::on_actionPlot_triggered()
+{
+    QString command("python3");
+        QStringList params;
+        params << "parquet_plt.py";
+        QProcess *process = new QProcess(this);
+        process->startDetached(command, params, "/home/sixie6e/theDirector/");
+}
+
