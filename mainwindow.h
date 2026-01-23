@@ -46,7 +46,7 @@ private:
     void initialize_base_sets();
     bool is_prime(const BigInt& n);
     void process_pair(std::string i, std::string j, int limit);
-    void runAutoMode();
+    void runAutoMode(int u_limit);
     void save_state();
 };
 
