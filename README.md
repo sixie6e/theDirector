@@ -56,6 +56,6 @@ wget https://packages.apache.org/artifactory/arrow/$(lsb_release --id --short | 
 sudo apt install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb\
 sudo apt update\
 sudo apt install libarrow-dev libparquet-dev qt6-base-dev python3-pip\
-pip3 install pandas matplotlib\
+pip3 install pandas matplotlib
 
 Has only been tested on Debian/Ubuntu distributions.
